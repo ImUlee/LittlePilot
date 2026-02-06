@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ] # 当推送到 main 分支时触发
+    branches: [ "main" ]
 
 jobs:
   build:
