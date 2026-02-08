@@ -87,7 +87,7 @@ def heartbeat():
     return jsonify({"status": "ok"})
 
 @app.route('/api/health', methods=['GET'])
-def health_check(): return jsonify({"status": "online", "server": "LotMonitor"})
+def health_check(): return jsonify({"status": "online", "server": "LittlePilot"})
 
 @app.route('/api/update_history', methods=['POST'])
 def update_history():
