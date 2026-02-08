@@ -36,35 +36,9 @@ def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
-    # 1. 日志数据表
-    c.execute('''CREATE TABLE IF NOT EXISTS logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        log_time TEXT, 
-        nickname TEXT, 
-        item_type TEXT, 
-        quantity INTEGER, 
-        unique_sign TEXT UNIQUE,
-        device_id TEXT
-    )''')
-    
-    # 2. 设备状态表 (device_id为主键，确保昵称实时更新)
-    c.execute('''CREATE TABLE IF NOT EXISTS devices (
-        device_id TEXT PRIMARY KEY,
-        nickname TEXT,
-        last_seen REAL,
-        process_running INTEGER
-    )''')
-
-    # 3. 历史修正表
-    c.execute('''CREATE TABLE IF NOT EXISTS daily_overrides (
-        date TEXT, 
-        device_id TEXT,
-        manual_users INTEGER, 
-        manual_sum INTEGER,
-        PRIMARY KEY (date, device_id)
-    )''')
-    
+    c.execute('''CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, log_time TEXT, nickname TEXT, item_type TEXT, quantity INTEGER, unique_sign TEXT UNIQUE, device_id TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS devices (device_id TEXT PRIMARY KEY, nickname TEXT, last_seen REAL, process_running INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS daily_overrides (date TEXT, device_id TEXT, manual_users INTEGER, manual_sum INTEGER, PRIMARY KEY (date, device_id))''')
     conn.commit()
     conn.close()
 
@@ -90,13 +64,13 @@ def get_nodes():
     nodes = []
     now = time.time()
     for r in rows:
-        # 判断是否在线 (15秒超时)
+        # 🔥 核心判断：15秒无心跳即视为离线
         is_online = (now - r['last_seen']) < 15
         nodes.append({
             "device_id": r['device_id'],
             "nickname": r['nickname'],
             "is_online": is_online,
-            "process_running": bool(r['process_running'])
+            "process_running": bool(r['process_running']) # 这是数据库记录的最后状态
         })
     conn.close()
     return jsonify({"nodes": nodes})
@@ -108,12 +82,9 @@ def heartbeat():
     device_id = data.get('device_id')
     nickname = data.get('nickname', 'Unknown')
     process_running = 1 if data.get('process_running', False) else 0
-    
     if not device_id: return jsonify({"status": "error"}), 400
-    
     conn = sqlite3.connect(DB_PATH)
     try:
-        # REPLACE INTO 会根据 device_id 更新昵称和状态
         conn.execute("REPLACE INTO devices (device_id, nickname, last_seen, process_running) VALUES (?, ?, ?, ?)", 
                      (device_id, nickname, time.time(), process_running))
         conn.commit()
@@ -143,10 +114,8 @@ def upload_file():
     file = request.files.get('file')
     device_id = request.form.get('device_id')
     nickname = request.form.get('nickname', 'Unknown')
-    
     if not file or not device_id: return jsonify({"status": "error"}), 400
     
-    # 上传时也更新在线状态，防止大文件传输导致心跳超时
     conn = sqlite3.connect(DB_PATH)
     conn.execute("REPLACE INTO devices (device_id, nickname, last_seen, process_running) VALUES (?, ?, ?, ?)", 
                  (device_id, nickname, time.time(), 1))
@@ -159,7 +128,6 @@ def upload_file():
     c = conn.cursor()
     new_count = 0
     pattern = r"\[(.*?)\]\s+(.*?)_\d+\s+\|.*?[,，]\s*(?:.*?)[,，]\s*(\d+)"
-    
     for line in lines:
         line = line.strip()
         if not line: continue 
@@ -179,13 +147,12 @@ def upload_file():
 @app.route('/api/stats')
 def get_stats():
     target_node_id = request.args.get('node_id')
-    
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
     try:
-        # 🔥 核心逻辑修正：综合判断在线状态和进程状态
+        # 🔥 核心修复：状态文案逻辑
         process_status_text = "未连接"
         is_client_online = False
         
@@ -194,12 +161,16 @@ def get_stats():
             row = c.fetchone()
             if row:
                 is_client_online = (time.time() - row['last_seen']) < 15
+                
                 if not is_client_online:
-                    process_status_text = "离线" # 客户端本身不在线
+                    # 客户端掉线了，没法知道目标程序状态 -> 报“监控离线”
+                    process_status_text = "监控离线" 
                 elif row['process_running']:
-                    process_status_text = "运行中" # 客户端在线且EXE在跑
+                    # 客户端在线 + 进程跑 -> 运行中
+                    process_status_text = "运行中" 
                 else:
-                    process_status_text = "未运行" # 客户端在线但EXE没跑
+                    # 客户端在线 + 进程没跑 -> 未运行
+                    process_status_text = "未运行" 
             else:
                 process_status_text = "未知设备"
         else:
@@ -211,7 +182,6 @@ def get_stats():
         if target_node_id:
             query += " WHERE device_id = ?"
             params.append(target_node_id)
-            
         c.execute(query, params)
         all_raw_logs = [dict(row) for row in c.fetchall()]
 
@@ -236,14 +206,12 @@ def get_stats():
         rank_list = [{"nickname": k, "win_times": v["win_times"], "win_sum": v["win_sum"]} for k, v in rank_map.items()]
         rank_list.sort(key=lambda x: x['win_sum'], reverse=True)
 
-        date_range_str = ""
+        date_range_str = "暂无数据"
         if overview_logs:
             overview_logs.sort(key=lambda x: x['log_dt'])
             s_str = overview_logs[0]['log_dt'].strftime("%Y.%m.%d")
             e_str = overview_logs[-1]['log_dt'].strftime("%Y.%m.%d")
             date_range_str = s_str if s_str == e_str else f"{s_str} - {e_str}"
-        else:
-            date_range_str = "暂无数据"
 
         # --- B. 明细页数据 ---
         query_det = "SELECT id, log_time, nickname, item_type, quantity FROM logs"
@@ -252,7 +220,6 @@ def get_stats():
             query_det += " WHERE device_id = ?"
             params_det.append(target_node_id)
         query_det += " ORDER BY id DESC LIMIT 5000"
-        
         c.execute(query_det, params_det)
         raw_details = [dict(row) for row in c.fetchall()]
         details = []
@@ -262,17 +229,11 @@ def get_stats():
                 details.append(log)
 
         # --- C. 历史页数据 ---
-        hist_sql = '''
-            SELECT substr(l.log_time, 1, 10) as date_str, COUNT(DISTINCT l.nickname) as calc_users, SUM(l.quantity) as calc_sum, d.manual_users, d.manual_sum
-            FROM logs l 
-            LEFT JOIN daily_overrides d ON substr(l.log_time, 1, 10) = d.date AND d.device_id = l.device_id
-            WHERE 1=1
-        '''
+        hist_sql = '''SELECT substr(l.log_time, 1, 10) as date_str, COUNT(DISTINCT l.nickname) as calc_users, SUM(l.quantity) as calc_sum, d.manual_users, d.manual_sum FROM logs l LEFT JOIN daily_overrides d ON substr(l.log_time, 1, 10) = d.date AND d.device_id = l.device_id WHERE 1=1'''
         hist_params = []
         if target_node_id:
             hist_sql += " AND l.device_id = ?"
             hist_params.append(target_node_id)
-            
         hist_sql += " GROUP BY date_str"
         
         c.execute(hist_sql, hist_params)
@@ -283,30 +244,19 @@ def get_stats():
             final_sum = row['manual_sum'] if row['manual_sum'] is not None else row['calc_sum']
             dt = parse_log_date(row['date_str'] + " 00:00:00")
             sort_key = dt if dt else datetime.min
-            history_list.append({
-                "date": row['date_str'],
-                "user_count": final_users,
-                "daily_sum": final_sum,
-                "is_manual": row['manual_users'] is not None,
-                "sort_key": sort_key
-            })
+            history_list.append({ "date": row['date_str'], "user_count": final_users, "daily_sum": final_sum, "is_manual": row['manual_users'] is not None, "sort_key": sort_key })
         history_list.sort(key=lambda x: x['sort_key'], reverse=True)
 
     except Exception as e:
         print(f"Stats Error: {e}", flush=True)
-        process_status_text = "Error"
-        total_users, total_wins, rank_list, details, history_list = 0, 0, [], [], []
+        process_status_text, total_users, total_wins, rank_list, details, history_list = "Error", 0, 0, [], [], []
         date_range_str = "Error"
     
     conn.close()
     return jsonify({
         "process_status": process_status_text, 
-        "total_users": total_users,
-        "total_wins": total_wins,
-        "rank_list": rank_list,
-        "date_range": date_range_str,
-        "details": details,
-        "history_data": history_list
+        "total_users": total_users, "total_wins": total_wins, "rank_list": rank_list,
+        "date_range": date_range_str, "details": details, "history_data": history_list
     })
 
 if __name__ == '__main__':
