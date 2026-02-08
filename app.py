@@ -63,16 +63,11 @@ def update_device_status(device_id, nickname, process_running, password):
     conn = get_db_connection()
     c = conn.cursor()
     now = time.time()
-    
-    # 尝试更新
     c.execute("UPDATE devices SET nickname=?, last_seen=?, process_running=?, password=? WHERE device_id=?", 
               (nickname, now, process_running, password, device_id))
-    
-    # 如果没更新到（说明被删除了，或者新设备），则重新插入 -> 实现了“自动上线复活”逻辑
     if c.rowcount == 0:
         c.execute("INSERT INTO devices (device_id, nickname, last_seen, process_running, first_seen, password) VALUES (?, ?, ?, ?, ?, ?)", 
                   (device_id, nickname, now, process_running, now, password))
-                  
     conn.commit()
     conn.close()
 
@@ -105,21 +100,48 @@ def get_nodes():
     conn.close()
     return jsonify({"nodes": nodes})
 
-# 🔥 新增：删除节点接口
 @app.route('/api/node/delete', methods=['POST'])
 def delete_node():
     data = request.json
     device_id = data.get('device_id')
     if not device_id: return jsonify({"status": "error"}), 400
-    
     conn = get_db_connection()
     try:
-        # 只删除设备表，保留日志表（以便复活后能看到历史数据，或者防止误删数据）
         conn.execute("DELETE FROM devices WHERE device_id = ?", (device_id,))
         conn.commit()
         return jsonify({"status": "success"})
+    except Exception as e: return jsonify({"error": str(e)}), 500
+    finally: conn.close()
+
+# 🔥 新增：获取指定日期的历史详细日志
+@app.route('/api/history_logs')
+def get_history_logs():
+    target_node_id = request.args.get('node_id')
+    target_date = request.args.get('date') # 格式 YYYY-MM-DD
+    
+    if not target_node_id or not target_date:
+        return jsonify({"logs": []})
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    try:
+        # 支持 YYYY-MM-DD 和 YYYY/MM/DD 两种格式匹配
+        target_date_slash = target_date.replace('-', '/')
+        
+        # 模糊查询当天所有记录
+        query = """
+            SELECT log_time, nickname, quantity 
+            FROM logs 
+            WHERE device_id = ? 
+            AND (log_time LIKE ? OR log_time LIKE ?)
+            ORDER BY id DESC
+        """
+        c.execute(query, (target_node_id, f"{target_date}%", f"{target_date_slash}%"))
+        rows = [dict(row) for row in c.fetchall()]
+        return jsonify({"logs": rows})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"History Logs Error: {e}")
+        return jsonify({"logs": []})
     finally:
         conn.close()
 
