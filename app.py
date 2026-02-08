@@ -190,11 +190,18 @@ def get_stats():
             e_str = overview_logs[-1]['log_dt'].strftime("%Y.%m.%d")
             date_range_str = s_str if s_str == e_str else f"{s_str} - {e_str}"
         else:
-            date_range_str = "无近48h数据"
+            # 🔥 修改文案
+            date_range_str = "暂无数据"
 
-        # --- B. 明细页数据 ---
-        c.execute("SELECT id, log_time, nickname, item_type, quantity FROM logs ORDER BY id DESC LIMIT 2000")
-        details = [dict(row) for row in c.fetchall()]
+        # --- B. 明细页数据 (🔥 增加 48h 过滤) ---
+        # 预取更多数据，然后在内存中过滤
+        c.execute("SELECT id, log_time, nickname, item_type, quantity FROM logs ORDER BY id DESC LIMIT 5000")
+        raw_details = [dict(row) for row in c.fetchall()]
+        details = []
+        for log in raw_details:
+            log_dt = parse_log_date(log['log_time'])
+            if log_dt and log_dt >= cutoff_time:
+                details.append(log)
 
         # --- C. 历史页数据 ---
         # 截取前10位作为日期分组 (例如 '06/Feb/2026' 或 '2026-02-06')
