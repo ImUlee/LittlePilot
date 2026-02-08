@@ -32,7 +32,6 @@ def parse_log_date(date_str):
         return None
     except: return None
 
-# 🔥 初始化数据库表结构
 def init_db():
     print("🔄 Initializing Database...", flush=True)
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -44,42 +43,32 @@ def init_db():
     conn.commit()
     conn.close()
 
-# 🔥 核心修复：获取安全连接（自动修复缺失的数据库）
 def get_db_connection():
-    # 1. 尝试连接
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    
-    # 2. 检查表是否存在
     try:
         c = conn.cursor()
         c.execute("SELECT 1 FROM devices LIMIT 1")
     except sqlite3.OperationalError:
-        # 3. 如果报错（通常是 no such table），说明数据库被删或损坏
         print("⚠️ Database tables missing. Re-creating...", flush=True)
         conn.close()
-        
-        # 4. 重建表结构
         init_db()
-        
-        # 5. 重新连接
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
-        
     return conn
 
-# 启动时先运行一次
 init_db()
 
-# 🔥 更新设备状态（带密码）
 def update_device_status(device_id, nickname, process_running, password):
-    conn = get_db_connection() # 使用安全连接
+    conn = get_db_connection()
     c = conn.cursor()
     now = time.time()
     
+    # 尝试更新
     c.execute("UPDATE devices SET nickname=?, last_seen=?, process_running=?, password=? WHERE device_id=?", 
               (nickname, now, process_running, password, device_id))
     
+    # 如果没更新到（说明被删除了，或者新设备），则重新插入 -> 实现了“自动上线复活”逻辑
     if c.rowcount == 0:
         c.execute("INSERT INTO devices (device_id, nickname, last_seen, process_running, first_seen, password) VALUES (?, ?, ?, ?, ?, ?)", 
                   (device_id, nickname, now, process_running, now, password))
@@ -98,7 +87,7 @@ def dashboard(): return render_template('dashboard.html')
 
 @app.route('/api/nodes')
 def get_nodes():
-    conn = get_db_connection() # 使用安全连接
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT * FROM devices ORDER BY first_seen ASC")
     rows = c.fetchall()
@@ -116,6 +105,24 @@ def get_nodes():
     conn.close()
     return jsonify({"nodes": nodes})
 
+# 🔥 新增：删除节点接口
+@app.route('/api/node/delete', methods=['POST'])
+def delete_node():
+    data = request.json
+    device_id = data.get('device_id')
+    if not device_id: return jsonify({"status": "error"}), 400
+    
+    conn = get_db_connection()
+    try:
+        # 只删除设备表，保留日志表（以便复活后能看到历史数据，或者防止误删数据）
+        conn.execute("DELETE FROM devices WHERE device_id = ?", (device_id,))
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
     data = request.json
@@ -123,7 +130,6 @@ def heartbeat():
     nickname = data.get('nickname', 'Unknown')
     password = data.get('password', '')
     process_running = 1 if data.get('process_running', False) else 0
-    
     if not device_id: return jsonify({"status": "error"}), 400
     try:
         update_device_status(device_id, nickname, process_running, password)
@@ -137,7 +143,7 @@ def health_check(): return jsonify({"status": "online", "server": "LittlePilot"}
 def update_history():
     data = request.json
     device_id = data.get('device_id')
-    conn = get_db_connection() # 使用安全连接
+    conn = get_db_connection()
     try:
         conn.execute("REPLACE INTO daily_overrides (date, device_id, manual_users, manual_sum) VALUES (?, ?, ?, ?)", 
                      (data.get('date'), device_id, data.get('manual_users'), data.get('manual_sum')))
@@ -153,7 +159,6 @@ def upload_file():
     device_id = request.form.get('device_id')
     nickname = request.form.get('nickname', 'Unknown')
     password = request.form.get('password', '')
-    
     process_status_str = request.form.get('process_running', 'False')
     process_running = 1 if process_status_str == 'True' else 0
     
@@ -165,8 +170,7 @@ def upload_file():
     try: content = raw_data.decode('gb18030')
     except: content = raw_data.decode('utf-8', errors='ignore')
     lines = content.split('\n')
-    
-    conn = get_db_connection() # 使用安全连接
+    conn = get_db_connection()
     c = conn.cursor()
     new_count = 0
     pattern = r"\[(.*?)\]\s+(.*?)_\d+\s+\|.*?[,，]\s*(?:.*?)[,，]\s*(\d+)"
@@ -190,14 +194,11 @@ def upload_file():
 def get_stats():
     target_node_id = request.args.get('node_id')
     req_password = request.args.get('password', '')
-    
-    conn = get_db_connection() # 使用安全连接
+    conn = get_db_connection()
     c = conn.cursor()
-    
     try:
         process_status_text = "未连接"
         is_client_online = False
-        
         if target_node_id:
             try:
                 c.execute("SELECT last_seen, process_running, password FROM devices WHERE device_id = ?", (target_node_id,))
@@ -207,21 +208,13 @@ def get_stats():
                     if db_pass and db_pass != req_password:
                         conn.close()
                         return jsonify({"error": "auth_failed"}), 403
-
                     is_client_online = (time.time() - row['last_seen']) < 15
-                    if not is_client_online:
-                        process_status_text = "离线" 
-                    elif row['process_running']:
-                        process_status_text = "运行中"
-                    else:
-                        process_status_text = "未运行"
-                else:
-                    process_status_text = "未知设备"
-            except sqlite3.OperationalError:
-                # 再次捕获，以防万一
-                process_status_text = "数据异常"
-        else:
-            process_status_text = "请选择节点"
+                    if not is_client_online: process_status_text = "离线" 
+                    elif row['process_running']: process_status_text = "运行中"
+                    else: process_status_text = "未运行"
+                else: process_status_text = "未知设备"
+            except sqlite3.OperationalError: process_status_text = "数据异常"
+        else: process_status_text = "请选择节点"
 
         query = "SELECT id, log_time, nickname, quantity FROM logs"
         params = []
@@ -292,7 +285,6 @@ def get_stats():
 
     except Exception as e:
         print(f"Stats Error: {e}", flush=True)
-        # 如果出错，可能是表不存在，这里也可以尝试捕获 OperationalError 并重试
         process_status_text, total_users, total_wins, rank_list, details, history_list = "Error", 0, 0, [], [], []
         date_range_str = "Error"
     
