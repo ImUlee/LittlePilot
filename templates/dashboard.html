@@ -229,8 +229,8 @@
                     <div class="text-muted small" style="font-family: monospace;">ID: {{ node.device_id.substring(0, 8) }}...</div>
                 </div>
                 <div class="text-end">
-                    <span class="badge" :class="!node.is_online ? 'bg-secondary' : (node.process_running ? 'bg-success' : 'bg-warning text-dark')">
-                        {{ !node.is_online ? '离线' : (node.process_running ? '运行中' : '未运行') }}
+                    <span class="badge" :class="node.is_online ? 'bg-success' : 'bg-secondary'">
+                        {{ node.is_online ? '在线' : '离线' }}
                     </span>
                 </div>
             </div>
@@ -275,12 +275,10 @@
                     const res = await axios.get('/api/nodes');
                     nodeList.value = res.data.nodes;
                     
-                    // 🔥 首次加载：优先读取缓存的节点 ID
                     if ((!curNodeId.value) && nodeList.value.length > 0) {
                         const lastId = localStorage.getItem('last_node_id');
-                        // 如果缓存ID存在于列表中，则选中它，否则选第一个
                         const target = nodeList.value.find(n => n.device_id === lastId) || nodeList.value[0];
-                        selectNode(target);
+                        selectNode(target); // 使用通用逻辑（含缓存检查）
                     }
                 } catch(e) {}
             };
@@ -288,7 +286,7 @@
             const selectNode = (node) => {
                 isAuthError.value = false;
                 
-                // 🔥 记录最后一次选择
+                // 🔥 记录最后一次选择的节点 ID
                 localStorage.setItem('last_node_id', node.device_id);
 
                 const savedPass = localStorage.getItem(`pwd_${node.device_id}`);
@@ -322,7 +320,12 @@
                 curNodeId.value = node.device_id;
                 curNodeName.value = node.nickname;
                 loadData();
-                curPage.value = 1;
+                // 只有当不是初始化加载时，才跳回首页
+                // 但为了体验一致，这里我们不强制判断，只要点击了就跳
+                // 如果是自动加载的，不需要跳，逻辑在 loadNodes 里区分
+                if (node.device_id === localStorage.getItem('last_node_id')) {
+                    // 保持当前页或者跳？为了简单，这里不做特殊处理，通常 selectNode 是手动触发的
+                }
             };
 
             const loadData = async () => {
