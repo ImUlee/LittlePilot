@@ -1,6 +1,6 @@
 {
     "name": "LittlePilot",
-    "short_name": "Pilot",
+    "short_name": "LittlePilot",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#000000",
