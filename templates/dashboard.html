@@ -98,23 +98,22 @@
         .nav-item-c { color: var(--nav-text-normal); padding: 6px 24px; border-radius: 50px; cursor: pointer; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: 0.3s; user-select: none; }
         .nav-item-c.active { background: var(--nav-bg-active); color: var(--nav-text-active); }
 
-        /* 🔥 修复标题对齐：移除 margin，统一由 page-header 控制 */
         .big-title {
             font-size: 34px; 
             font-weight: 800; 
             color: var(--text-main);
-            margin: 0; /* 关键修改 */
+            margin: 0; /* 统一无边距 */
             letter-spacing: -0.02em; 
             padding-left: 5px;
         }
         
-        /* 🔥 统一 Page Header 布局，全部使用 flex 确保对齐一致 */
+        /* 统一标题容器：Flex布局，垂直居中，上下边距一致 */
         .page-header { 
             margin-top: 20px; 
             margin-bottom: 20px; 
             display: flex; 
             align-items: center; 
-            min-height: 42px; /* 确保高度一致 */
+            min-height: 42px; 
         }
 
         .scale-container {
@@ -184,7 +183,6 @@
         
         .date-range-badge { font-size: 0.75rem; color: var(--text-sub); background: var(--badge-bg); padding: 2px 8px; border-radius: 6px; font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
 
-        /* 🔥 动画优化：去除左右滑动的 translateX，改为纯透明度淡入淡出 */
         .fade-slide-enter-active, .fade-slide-leave-active { transition: opacity 0.2s; }
         .fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; display: none; }
 
@@ -193,9 +191,7 @@
         .border-bottom { border-bottom: 1px solid var(--border-color) !important; }
         
         th { white-space: nowrap; color: var(--text-sub); font-weight: 600; }
-        @media (prefers-color-scheme: dark) {
-            th { color: var(--text-main) !important; }
-        }
+        @media (prefers-color-scheme: dark) { th { color: var(--text-main) !important; } }
         
         .text-muted { color: var(--text-sub) !important; }
         .fw-bold { color: var(--text-main) !important; }
@@ -205,7 +201,7 @@
 </head>
 <body>
 
-<div id="app" v-cloak @touchstart="touchStart" @touchend="touchEnd">
+<div id="app" v-cloak>
     
     <div class="custom-modal-overlay" v-if="editModal.show">
         <div class="custom-modal">
@@ -334,7 +330,7 @@
 
         <transition name="fade-slide">
             <div v-show="curPage===3">
-                <div class="d-flex justify-content-between align-items-center page-header px-2">
+                <div class="page-header justify-content-between">
                     <h1 class="big-title">历史记录</h1>
                     <div class="d-flex align-items-center gap-1">
                         <div class="icon-btn" @click="hideHistory = !hideHistory" title="隐私开关">
@@ -408,9 +404,6 @@
             const hideNicknames = ref(false);
             const hideHistory = ref(false);
 
-            let touchStartX = 0;
-            let touchStartY = 0;
-
             const loadData = async () => {
                 try {
                     const res = await axios.get('/api/stats');
@@ -465,38 +458,15 @@
                 } catch(e) { alert("保存失败"); }
             };
 
-            const handleTouchStart = (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            };
-
-            const handleTouchEnd = (e) => {
-                const endX = e.changedTouches[0].screenX;
-                const endY = e.changedTouches[0].screenY;
-                const diffX = touchStartX - endX;
-                const diffY = touchStartY - endY;
-
-                if (Math.abs(diffX) > Math.abs(diffY)) {
-                    if (diffX > 40) {
-                        if (curPage.value < 3) curPage.value++;
-                    } else if (diffX < -40) {
-                        if (curPage.value > 1) curPage.value--;
-                    }
-                }
-            };
+            // 🔥 移除所有 touch 相关的事件监听逻辑
 
             onMounted(() => {
                 editModal.value.show = false;
                 loadData();
                 setInterval(loadData, 2000);
-                window.addEventListener('touchstart', handleTouchStart);
-                window.addEventListener('touchend', handleTouchEnd);
             });
 
-            onUnmounted(() => {
-                window.removeEventListener('touchstart', handleTouchStart);
-                window.removeEventListener('touchend', handleTouchEnd);
-            });
+            // 移除 onUnmounted 中的 removeEventListener (不再需要)
 
             return { 
                 curPage, stats, searchText, filteredDetails, expandedDates, toggleDate,
