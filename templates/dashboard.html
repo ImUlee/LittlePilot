@@ -60,7 +60,7 @@
         .bg-green-g { background: linear-gradient(135deg, #34C759, #248A3D); }
         .bg-gray-g { background: linear-gradient(135deg, #8E8E93, #636366); }
         .bg-blue-g { background: var(--blue-card-bg); }
-        .bg-offline-g { background: linear-gradient(135deg, #636366, #3A3A3C); } /* 离线颜色 */
+        .bg-offline-g { background: linear-gradient(135deg, #FF3B30, #C0392B); } /* 监控离线：红色 */
         
         .list-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
         .rank-container { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
@@ -135,7 +135,7 @@
             </div>
             
             <div class="status-bar-card" :class="getStatusClass(stats.process_status)">
-                <div class="status-label">客户端运行状态</div>
+                <div class="status-label">目标程序状态</div>
                 <div class="status-value">
                     <div class="blink-dot" v-if="stats.process_status === '运行中'"></div>
                     {{ stats.process_status }}
@@ -276,8 +276,8 @@
 
             const getStatusClass = (status) => {
                 if (status === '运行中') return 'bg-green-g';
-                if (status === '离线') return 'bg-offline-g';
-                return 'bg-gray-g'; // 未运行
+                if (status === '监控离线') return 'bg-offline-g'; // 红色
+                return 'bg-gray-g'; // 未运行/其他
             };
 
             const filteredDetails = computed(() => {
