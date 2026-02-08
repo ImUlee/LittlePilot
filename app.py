@@ -155,7 +155,8 @@ def get_stats():
             if row:
                 is_client_online = (time.time() - row['last_seen']) < 15
                 if not is_client_online:
-                    process_status_text = "离线"  # 🔥 修改文案：直接显示离线
+                    # [Logic Fix] Client offline -> Program definitely not running (display as "Not Running")
+                    process_status_text = "离线" 
                 elif row['process_running']:
                     process_status_text = "运行中"
                 else:
