@@ -211,8 +211,8 @@
                     <div class="text-muted small" style="font-family: monospace;">ID: {{ node.device_id.substring(0, 8) }}...</div>
                 </div>
                 <div class="text-end">
-                    <span class="badge" :class="!node.is_online ? 'bg-secondary' : (node.process_running ? 'bg-success' : 'bg-warning text-dark')">
-                        {{ !node.is_online ? '离线' : (node.process_running ? '运行中' : '未运行') }}
+                    <span class="badge" :class="node.is_online ? 'bg-success' : 'bg-secondary'">
+                        {{ node.is_online ? '在线' : '离线' }}
                     </span>
                 </div>
             </div>
@@ -274,11 +274,10 @@
                 } catch(e) { console.error(e); }
             };
 
-            // 🔥 核心修正：状态颜色判断
             const getStatusClass = (status) => {
                 if (status === '运行中') return 'bg-green-g';
-                if (status === '离线') return 'bg-offline-g'; // 如果文案是“离线”，显示红色
-                return 'bg-gray-g'; // 未运行/未知
+                if (status === '离线') return 'bg-offline-g'; // 红色
+                return 'bg-gray-g'; // 未运行 / 离线
             };
 
             const filteredDetails = computed(() => {
