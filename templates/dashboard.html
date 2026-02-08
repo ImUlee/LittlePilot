@@ -34,17 +34,13 @@
             --badge-bg: #F2F2F7;
             --blue-card-bg: linear-gradient(135deg, #007AFF, #0055B3);
             
-            /* 日间模式底栏背景 */
             --nav-bg: #454545;
             --nav-item-bg: rgba(0, 0, 0, 0.25); 
             --nav-text-normal: rgba(255, 255, 255, 0.5);
             --nav-text-active: #FFFFFF;
             --nav-bg-active: rgba(255, 255, 255, 0.15);
             
-            /* 图标点击背景 */
             --icon-btn-active: rgba(0,0,0,0.05);
-            
-            /* 日间图标颜色 (深灰) */
             --icon-color: #1C1C1E;
         }
 
@@ -62,7 +58,6 @@
                 --badge-bg: #2C2C2E;
                 --blue-card-bg: linear-gradient(135deg, #00509E, #003366);
 
-                /* 深色模式底栏 */
                 --nav-bg: rgba(118, 118, 128, 0.24);
                 --nav-item-bg: rgba(0, 0, 0, 0.2); 
                 --nav-text-normal: rgba(255, 255, 255, 0.5);
@@ -70,8 +65,6 @@
                 --nav-bg-active: rgba(255, 255, 255, 0.15);
                 
                 --icon-btn-active: rgba(255,255,255,0.1);
-
-                /* 夜间图标颜色 (柔和浅灰) */
                 --icon-color: #A0A0A0;
             }
         }
@@ -89,7 +82,6 @@
         }
         [v-cloak] { display: none; }
         
-        /* 底部导航栏 */
         .bottom-nav { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             height: calc(65px + env(safe-area-inset-bottom));
@@ -106,11 +98,24 @@
         .nav-item-c { color: var(--nav-text-normal); padding: 6px 24px; border-radius: 50px; cursor: pointer; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: 0.3s; user-select: none; }
         .nav-item-c.active { background: var(--nav-bg-active); color: var(--nav-text-active); }
 
+        /* 🔥 修复标题对齐：移除 margin，统一由 page-header 控制 */
         .big-title {
-            font-size: 34px; font-weight: 800; color: var(--text-main);
-            margin-top: 20px; margin-bottom: 20px; letter-spacing: -0.02em; padding-left: 5px;
+            font-size: 34px; 
+            font-weight: 800; 
+            color: var(--text-main);
+            margin: 0; /* 关键修改 */
+            letter-spacing: -0.02em; 
+            padding-left: 5px;
         }
-        .page-header { margin-top: 20px; margin-bottom: 20px; }
+        
+        /* 🔥 统一 Page Header 布局，全部使用 flex 确保对齐一致 */
+        .page-header { 
+            margin-top: 20px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            min-height: 42px; /* 确保高度一致 */
+        }
 
         .scale-container {
             max-width: 800px; margin: 0 auto; padding: 20px; min-height: 80vh;
@@ -179,16 +184,15 @@
         
         .date-range-badge { font-size: 0.75rem; color: var(--text-sub); background: var(--badge-bg); padding: 2px 8px; border-radius: 6px; font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
 
-        .fade-slide-enter-active, .fade-slide-leave-active { transition: opacity 0.2s, transform 0.2s; }
-        .fade-slide-enter-from { opacity: 0; transform: translateX(5px); }
-        .fade-slide-leave-to { opacity: 0; transform: translateX(-5px); display: none; }
+        /* 🔥 动画优化：去除左右滑动的 translateX，改为纯透明度淡入淡出 */
+        .fade-slide-enter-active, .fade-slide-leave-active { transition: opacity 0.2s; }
+        .fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; display: none; }
 
         .table { --bs-table-bg: transparent; color: var(--text-main); }
         .table-borderless td, .table-borderless th { border: none; }
         .border-bottom { border-bottom: 1px solid var(--border-color) !important; }
         
         th { white-space: nowrap; color: var(--text-sub); font-weight: 600; }
-        /* 深色模式下，表头强制白色 */
         @media (prefers-color-scheme: dark) {
             th { color: var(--text-main) !important; }
         }
