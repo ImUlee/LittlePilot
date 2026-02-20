@@ -26,8 +26,7 @@
             --nav-bg: #454545; --nav-item-bg: rgba(0, 0, 0, 0.25); 
             --nav-text-normal: rgba(255, 255, 255, 0.5); --nav-text-active: #FFFFFF;
             --nav-bg-active: rgba(255, 255, 255, 0.15);
-            --icon-btn-active: rgba(0,0,0,0.05); 
-            --icon-color: #A8A8A8; /* 🔥 图标颜色修改为淡灰色 */
+            --icon-btn-active: rgba(0,0,0,0.05); --icon-color: #A8A8A8;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -39,8 +38,7 @@
                 --nav-bg: rgba(118, 118, 128, 0.24); --nav-item-bg: rgba(0, 0, 0, 0.2); 
                 --nav-text-normal: rgba(255, 255, 255, 0.5); --nav-text-active: #FFFFFF;
                 --nav-bg-active: rgba(255, 255, 255, 0.15);
-                --icon-btn-active: rgba(255,255,255,0.1); 
-                --icon-color: #A8A8A8; /* 🔥 暗黑模式下也保持一致的淡灰 */
+                --icon-btn-active: rgba(255,255,255,0.1); --icon-color: #A8A8A8;
             }
         }
         html, body { overflow-x: hidden; width: 100%; }
@@ -57,7 +55,7 @@
         .scale-container { max-width: 800px; margin: 0 auto; padding: 15px; min-height: 80vh; transform-origin: top center; }
         @media (max-width: 768px) { .scale-container { transform: scale(0.96); padding-top: 10px; } }
         
-        .apple-card { background: var(--card-bg); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); color: var(--text-main); transition: background-color 0.3s; }
+        .apple-card { background: var(--card-bg); border-radius: 24px; padding: 16px; margin-bottom: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.025); color: var(--text-main); transition: background-color 0.3s; }
         
         .static-dot { 
             width: 10px; 
@@ -75,10 +73,10 @@
 
         .hl-card { 
             background: var(--card-bg); 
-            border-radius: 18px; 
+            border-radius: 24px; 
             padding: 16px 12px; 
             height: 110px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.04); 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.025); 
             display: flex; 
             flex-direction: column; 
             align-items: center;  
@@ -96,15 +94,17 @@
             color: var(--text-sub);
             font-weight: 500;
         }
-        .num-account { color: #3661e3; }
-        .num-total { color: #893ae3; }
+        .num-account { color: var(--text-main); } 
+        .num-total { color: #5ec26b; } 
         
         .list-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+        .list-row:last-child { border-bottom: none; padding-bottom: 0; }
+        
         .rank-container { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
         .rank-container::-webkit-scrollbar { width: 4px; }
         .rank-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         
-        .accordion-item { border: 1px solid var(--border-color); border-radius: 12px !important; margin-bottom: 10px; background: var(--card-bg); overflow: hidden; }
+        .accordion-item { border: 1px solid var(--border-color); border-radius: 16px !important; margin-bottom: 10px; background: var(--card-bg); overflow: hidden; }
         .accordion-header { padding: 12px 16px; background: var(--card-bg); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .accordion-header:hover { background: rgba(128,128,128,0.05); }
         .accordion-header .date { font-weight: bold; font-size: 1.05rem; color: var(--text-main); }
@@ -118,16 +118,15 @@
         .arrow.rotated { transform: rotate(180deg); }
         
         .custom-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--modal-overlay); z-index: 9999; display: flex; justify-content: center; align-items: center; }
-        .custom-modal { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; width: 90%; max-width: 400px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.2s ease-out; color: var(--text-main); }
+        .custom-modal { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; width: 90%; max-width: 400px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); animation: popIn 0.2s ease-out; color: var(--text-main); }
         .full-screen-modal { width: 95%; max-width: 800px; height: 90%; display: flex; flex-direction: column; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .form-control { background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-main); }
+        .form-control { background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-main); border-radius: 10px; }
         .form-control:focus { background-color: var(--input-bg); color: var(--text-main); border-color: #007AFF; box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.25); }
         .form-control:disabled { background-color: rgba(128,128,128,0.1); color: var(--text-sub); }
         input::placeholder { color: var(--text-sub) !important; opacity: 0.7; }
         .icon-btn { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s, transform 0.1s; user-select: none; }
         .icon-btn:active { transform: scale(0.92); background-color: var(--icon-btn-active); }
-        /* 激活状态仍然保留品牌色 */
         .icon-btn.active { background-color: var(--nav-bg-active); color: #007AFF; }
         .icon-btn.active ion-icon { color: #007AFF; }
         
@@ -143,10 +142,12 @@
         @media (prefers-color-scheme: dark) { th { color: var(--text-main) !important; } }
         .text-muted { color: var(--text-sub) !important; }
         .fw-bold { color: var(--text-main) !important; }
+        .nickname-text { font-weight: 500; color: var(--text-main); }
+
         .text-primary { color: #007AFF !important; }
         @media (prefers-color-scheme: dark) { .text-primary { color: #0A84FF !important; } }
         
-        .node-row { display: flex; align-items: center; padding: 14px 16px; background: var(--card-bg); border-radius: 12px; margin-bottom: 8px; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+        .node-row { display: flex; align-items: center; padding: 14px 16px; background: var(--card-bg); border-radius: 16px; margin-bottom: 8px; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
         .node-row:active { transform: scale(0.98); }
         .node-row.selected { border-color: #007AFF; background: rgba(0,122,255,0.05); }
         .node-status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 12px; }
@@ -155,7 +156,6 @@
         .form-check-input { cursor: pointer; }
         .form-check-label { cursor: pointer; user-select: none; }
         
-        /* 独立的删除按钮颜色，依然保持红色预警 */
         .del-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; color: #FF3B30; }
         .del-btn ion-icon { color: #FF3B30; }
         .del-btn:hover { background: rgba(255, 59, 48, 0.1); }
@@ -186,7 +186,8 @@
             top: 0;
             left: 0;
             right: 0;
-            height: calc(env(safe-area-inset-top) + 90px);
+            /* 🔥 将基础高度从 90px 修改为 80px */
+            height: calc(env(safe-area-inset-top) + 80px);
             z-index: 9999;
             pointer-events: none;
             background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(244, 243, 249, 0.8) 45%, rgba(244, 243, 249, 0) 100%);
@@ -256,7 +257,7 @@
                     <tbody>
                         <tr v-for="log in historyLogsModal.logs" class="border-bottom">
                             <td class="text-muted small">{{ log.log_time.split(' ')[1] || log.log_time }}</td>
-                            <td class="fw-bold">{{ hideNicknames ? '***' : log.nickname }}</td>
+                            <td class="nickname-text">{{ hideNicknames ? '***' : log.nickname }}</td>
                             <td class="text-end fw-bold text-primary">{{ log.quantity }}</td>
                         </tr>
                     </tbody>
@@ -280,30 +281,33 @@
                 </div>
             </div>
 
-            <div class="row g-2 mb-3">
+            <div class="row g-2 mb-4">
                 <div class="col-6">
                     <div class="hl-card">
                         <div class="hl-num num-account">{{ stats.total_users || 0 }}</div>
-                        <div class="hl-label">账号数量</div>
+                        <div class="hl-label">中奖账号数量</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="hl-card">
                         <div class="hl-num num-total">{{ stats.total_wins || 0 }}</div>
-                        <div class="hl-label">本轮累计</div>
+                        <div class="hl-label">本轮累计数量</div>
                     </div>
                 </div>
             </div>
 
-            <div class="apple-card">
-                <div class="d-flex align-items-center mb-3">
-                    <h5 class="fw-bold m-0 me-2">收益排行</h5>
-                    <div class="icon-btn" @click="hideNicknames = !hideNicknames" title="隐私模式"><ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'"></ion-icon></div>
-                    <span class="date-range-badge ms-auto" v-if="stats.date_range">{{ stats.date_range }}</span>
+            <div class="d-flex align-items-center mb-2 px-2">
+                <span class="fw-bold" style="font-size: 1.05rem; color: var(--text-sub);">收益排行</span>
+                <div class="icon-btn ms-1" style="width: 28px; height: 28px;" @click="hideNicknames = !hideNicknames" title="隐私模式">
+                    <ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'" style="font-size: 18px;"></ion-icon>
                 </div>
+                <span class="date-range-badge ms-auto" v-if="stats.date_range">{{ stats.date_range }}</span>
+            </div>
+
+            <div class="apple-card mt-0">
                 <div class="rank-container">
                     <div v-for="(user, i) in stats.rank_list" :key="i" class="list-row">
-                        <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;"><div class="fw-bold text-truncate pe-2">{{ hideNicknames ? '***' : user.nickname }}</div></div>
+                        <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;"><div class="nickname-text text-truncate pe-2">{{ hideNicknames ? '***' : user.nickname }}</div></div>
                         <div class="d-flex align-items-center"><span class="text-muted small me-3" style="font-weight: 500;">{{ user.win_times }} 次</span><span class="text-primary fw-bold" style="font-size: 1.1rem; min-width: 40px; text-align: right;">{{ user.win_sum }}</span></div>
                     </div>
                     <div v-if="stats.rank_list.length===0" class="text-center text-muted py-3">暂无数据</div>
@@ -330,8 +334,8 @@
                 </div>
                 <div style="max-height: 65vh; overflow-y: auto;">
                     <table class="table table-borderless align-middle">
-                        <thead class="small border-bottom"><tr><th style="padding-bottom: 10px;"><div class="d-flex align-items-center"><span>用户 / 时间</span><div class="icon-btn ms-1" @click="hideNicknames = !hideNicknames"><ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'" style="font-size: 20px;"></ion-icon></div></div></th><th class="text-end" style="padding-bottom: 10px;">数量</th></tr></thead>
-                        <tbody><tr v-for="item in filteredDetails" class="border-bottom"><td class="py-3"><div class="fw-bold text-truncate" style="max-width: 220px; font-size: 1rem;">{{ hideNicknames ? '***' : item.nickname }}</div><div class="text-muted small" style="font-size: 0.8rem; margin-top: 4px;">{{ item.log_time }}</div></td><td class="text-end py-3 align-middle"><span class="text-primary fw-bold" style="font-size: 1.5rem; letter-spacing: -0.5px;">{{ item.quantity }}</span></td></tr></tbody>
+                        <thead class="small border-bottom"><tr><th style="padding-bottom: 10px;"><div class="d-flex align-items-center"><span>用户 / 时间</span><div class="icon-btn ms-1" style="width:28px; height:28px;" @click="hideNicknames = !hideNicknames"><ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'" style="font-size: 18px;"></ion-icon></div></div></th><th class="text-end" style="padding-bottom: 10px;">数量</th></tr></thead>
+                        <tbody><tr v-for="item in filteredDetails" class="border-bottom"><td class="py-3"><div class="nickname-text text-truncate" style="max-width: 220px; font-size: 1rem;">{{ hideNicknames ? '***' : item.nickname }}</div><div class="text-muted small" style="font-size: 0.8rem; margin-top: 4px;">{{ item.log_time }}</div></td><td class="text-end py-3 align-middle"><span class="text-primary fw-bold" style="font-size: 1.5rem; letter-spacing: -0.5px;">{{ item.quantity }}</span></td></tr></tbody>
                     </table>
                 </div>
             </div>
