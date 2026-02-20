@@ -57,6 +57,14 @@
         
         .apple-card { background: var(--card-bg); border-radius: 24px; padding: 16px; margin-bottom: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.025); color: var(--text-main); transition: background-color 0.3s; }
         
+        /* 🔥 状态气泡的容器基础样式 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
         .static-dot { 
             width: 10px; 
             height: 10px; 
@@ -66,10 +74,19 @@
             box-sizing: border-box;
             transition: all 0.3s ease;
         }
-        .dot-running { background-color: #34C759; box-shadow: 0 0 6px rgba(52, 199, 89, 0.4); }
-        .dot-standby { border: 2px solid #34C759; background-color: transparent; }
-        .dot-offline { background-color: #A8A8A8; }
-        .dot-warning { background-color: #FF9500; }
+
+        /* 🔥 各个状态的具体颜色与 10% 淡背景映射 */
+        .status-running { background-color: rgba(52, 199, 89, 0.1); }
+        .status-running .static-dot { background-color: #34C759; box-shadow: 0 0 6px rgba(52, 199, 89, 0.4); }
+        
+        .status-standby { background-color: rgba(52, 199, 89, 0.1); }
+        .status-standby .static-dot { border: 2px solid #34C759; background-color: transparent; }
+        
+        .status-offline { background-color: rgba(168, 168, 168, 0.1); }
+        .status-offline .static-dot { background-color: #A8A8A8; }
+        
+        .status-warning { background-color: rgba(255, 149, 0, 0.1); }
+        .status-warning .static-dot { background-color: #FF9500; }
 
         .hl-card { 
             background: var(--card-bg); 
@@ -87,10 +104,11 @@
             font-size: 2.4rem; 
             font-weight: 800; 
             line-height: 1; 
-            margin-bottom: 6px; 
+            margin-bottom: 6px;
+            font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; 
         }
         .hl-label {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: var(--text-sub);
             font-weight: 500;
         }
@@ -108,7 +126,7 @@
         .accordion-header { padding: 12px 16px; background: var(--card-bg); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .accordion-header:hover { background: rgba(128,128,128,0.05); }
         .accordion-header .date { font-weight: bold; font-size: 1.05rem; color: var(--text-main); }
-        .accordion-header .summary { color: #007AFF; font-weight: 700; font-size: 1.1rem; }
+        .accordion-header .summary { color: #007AFF; font-weight: 700; font-size: 1.05rem; }
         .accordion-body { background: var(--app-bg); padding: 15px 16px; border-top: 1px solid var(--border-color); animation: slideIn 0.2s ease-out; position: relative; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-sub); }
@@ -142,7 +160,7 @@
         @media (prefers-color-scheme: dark) { th { color: var(--text-main) !important; } }
         .text-muted { color: var(--text-sub) !important; }
         .fw-bold { color: var(--text-main) !important; }
-        .nickname-text { font-weight: 500; color: var(--text-main); }
+        .nickname-text { font-weight: 400; font-size: 0.95rem; color: var(--text-main); }
 
         .text-primary { color: #007AFF !important; }
         @media (prefers-color-scheme: dark) { .text-primary { color: #0A84FF !important; } }
@@ -186,7 +204,6 @@
             top: 0;
             left: 0;
             right: 0;
-            /* 🔥 将基础高度从 90px 修改为 80px */
             height: calc(env(safe-area-inset-top) + 80px);
             z-index: 9999;
             pointer-events: none;
@@ -273,9 +290,9 @@
             <div class="page-header justify-content-between align-items-center">
                 <h1 class="big-title">Today</h1>
                 
-                <div class="d-flex align-items-center" v-if="stats.process_status">
-                    <div class="static-dot" :class="getDotClass(stats.process_status)"></div>
-                    <span style="color: var(--text-sub); font-size: 0.95rem; font-weight: 500;">
+                <div class="status-badge" :class="getStatusTypeClass(stats.process_status)" v-if="stats.process_status">
+                    <div class="static-dot"></div>
+                    <span style="color: var(--text-sub); font-size: 0.85rem; font-weight: 600;">
                         {{ getStatusText(stats.process_status) }}
                     </span>
                 </div>
@@ -285,20 +302,20 @@
                 <div class="col-6">
                     <div class="hl-card">
                         <div class="hl-num num-account">{{ stats.total_users || 0 }}</div>
-                        <div class="hl-label">中奖账号数量</div>
+                        <div class="hl-label">账号数量</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="hl-card">
                         <div class="hl-num num-total">{{ stats.total_wins || 0 }}</div>
-                        <div class="hl-label">本轮累计数量</div>
+                        <div class="hl-label">本轮产出</div>
                     </div>
                 </div>
             </div>
 
             <div class="d-flex align-items-center mb-2 px-2">
-                <span class="fw-bold" style="font-size: 1.05rem; color: var(--text-sub);">收益排行</span>
-                <div class="icon-btn ms-1" style="width: 28px; height: 28px;" @click="hideNicknames = !hideNicknames" title="隐私模式">
+                <span class="fw-bold" style="font-size: 1.4rem; color: var(--text-main); letter-spacing: -0.01em;">收益排行</span>
+                <div class="icon-btn ms-2" style="width: 28px; height: 28px;" @click="hideNicknames = !hideNicknames" title="隐私模式">
                     <ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'" style="font-size: 18px;"></ion-icon>
                 </div>
                 <span class="date-range-badge ms-auto" v-if="stats.date_range">{{ stats.date_range }}</span>
@@ -335,7 +352,10 @@
                 <div style="max-height: 65vh; overflow-y: auto;">
                     <table class="table table-borderless align-middle">
                         <thead class="small border-bottom"><tr><th style="padding-bottom: 10px;"><div class="d-flex align-items-center"><span>用户 / 时间</span><div class="icon-btn ms-1" style="width:28px; height:28px;" @click="hideNicknames = !hideNicknames"><ion-icon :name="hideNicknames ? 'eye-off-outline' : 'eye-outline'" style="font-size: 18px;"></ion-icon></div></div></th><th class="text-end" style="padding-bottom: 10px;">数量</th></tr></thead>
-                        <tbody><tr v-for="item in filteredDetails" class="border-bottom"><td class="py-3"><div class="nickname-text text-truncate" style="max-width: 220px; font-size: 1rem;">{{ hideNicknames ? '***' : item.nickname }}</div><div class="text-muted small" style="font-size: 0.8rem; margin-top: 4px;">{{ item.log_time }}</div></td><td class="text-end py-3 align-middle"><span class="text-primary fw-bold" style="font-size: 1.5rem; letter-spacing: -0.5px;">{{ item.quantity }}</span></td></tr></tbody>
+                        <tbody><tr v-for="item in filteredDetails" class="border-bottom"><td class="py-3">
+                            <div class="nickname-text text-truncate" style="max-width: 220px;">{{ hideNicknames ? '***' : item.nickname }}</div>
+                            <div class="text-muted small" style="font-size: 0.75rem; margin-top: 4px;">{{ item.log_time }}</div>
+                        </td><td class="text-end py-3 align-middle"><span class="text-primary fw-bold" style="font-size: 1.4rem; letter-spacing: -0.5px;">{{ item.quantity }}</span></td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -373,7 +393,7 @@
                 <div class="node-status-dot" :class="node.is_online ? 'online' : 'offline'"></div>
                 <div class="flex-grow-1">
                     <div class="d-flex align-items-center mb-1">
-                        <span class="fw-bold me-2" style="font-size: 1.1rem;">{{ node.nickname }}</span>
+                        <span class="fw-bold me-2" style="font-size: 1.05rem;">{{ node.nickname }}</span>
                         <ion-icon name="lock-closed" v-if="node.has_password" style="font-size: 14px; color: #8E8E93;"></ion-icon>
                         <span v-if="curNodeId === node.device_id" class="badge bg-primary rounded-pill ms-2" style="font-size: 0.6rem;">当前</span>
                     </div>
@@ -537,13 +557,14 @@
                 return status;
             };
 
-            const getDotClass = (status) => {
-                if (!status) return 'dot-offline';
-                if (status === '运行中') return 'dot-running';
-                if (status === '未运行') return 'dot-standby';
-                if (status === '离线' || status === '未连接') return 'dot-offline';
-                if (status.includes('无权限')) return 'dot-warning';
-                return 'dot-offline';
+            // 🔥 新增：统一修改状态类的返回，应用在 status-badge 容器上
+            const getStatusTypeClass = (status) => {
+                if (!status) return 'status-offline';
+                if (status === '运行中') return 'status-running';
+                if (status === '未运行') return 'status-standby';
+                if (status === '离线' || status === '未连接') return 'status-offline';
+                if (status.includes('无权限')) return 'status-warning';
+                return 'status-offline';
             };
 
             const filteredDetails = computed(() => {
@@ -629,7 +650,7 @@
                 closeModal, saveEdit, confirmPassword,
                 hideNicknames, hideHistory, handleHistoryEdit, deleteNode,
                 nodeList, curNodeId, curNodeName, selectNode, isManageMode,
-                getStatusText, getDotClass 
+                getStatusText, getStatusTypeClass 
             };
         }
     }).mount('#app');
