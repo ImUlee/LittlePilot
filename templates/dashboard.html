@@ -58,15 +58,16 @@
         
         .apple-card { background: var(--card-bg); border-radius: 24px; padding: 16px; margin-bottom: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.025); color: var(--text-main); transition: background-color 0.3s; }
         
-        /* 🔥 状态气泡容器重构为描边模式 */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 3px 9px; /* 微调以抵消边框厚度 */
+            padding: 2px 8px;
             border-radius: 50px;
-            border: 1px solid transparent;
-            background-color: transparent; /* 去除原本的背景色 */
+            border: 2px solid transparent; 
+            background-color: transparent; 
             transition: all 0.3s ease;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
         .static-dot { 
             width: 10px; 
@@ -78,17 +79,16 @@
             transition: all 0.3s ease;
         }
 
-        /* 30%透明度的对应色彩描边 */
-        .status-running { border-color: rgba(52, 199, 89, 0.3); }
+        .status-running { border-color: rgba(52, 199, 89, 0.3); color: #34C759; }
         .status-running .static-dot { background-color: #34C759; box-shadow: 0 0 6px rgba(52, 199, 89, 0.4); }
         
-        .status-standby { border-color: rgba(52, 199, 89, 0.3); }
+        .status-standby { border-color: rgba(52, 199, 89, 0.3); color: #34C759; }
         .status-standby .static-dot { background-color: #34C759; }
         
-        .status-offline { border-color: rgba(168, 168, 168, 0.3); }
+        .status-offline { border-color: rgba(168, 168, 168, 0.3); color: #A8A8A8; }
         .status-offline .static-dot { background-color: #A8A8A8; }
         
-        .status-warning { border-color: rgba(255, 149, 0, 0.3); }
+        .status-warning { border-color: rgba(255, 149, 0, 0.3); color: #FF9500; }
         .status-warning .static-dot { background-color: #FF9500; }
 
         .hl-card { 
@@ -125,7 +125,8 @@
         .rank-container::-webkit-scrollbar { width: 4px; }
         .rank-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         
-        .accordion-item { border: 1px solid var(--border-color); border-radius: 16px !important; margin-bottom: 10px; background: var(--card-bg); overflow: hidden; }
+        /* 🔥 去除历史卡片的描边，并增加悬浮阴影，统一 iOS 无边框质感 */
+        .accordion-item { border: none; border-radius: 16px !important; margin-bottom: 12px; background: var(--card-bg); overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.025); }
         .accordion-header { padding: 12px 16px; background: var(--card-bg); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
         .accordion-header:hover { background: rgba(128,128,128,0.05); }
         .accordion-header .date { font-weight: bold; font-size: 1.05rem; color: var(--text-main); }
@@ -324,9 +325,7 @@
                 
                 <div class="status-badge" :class="getStatusTypeClass(stats.process_status)" v-if="stats.process_status">
                     <div class="static-dot"></div>
-                    <span style="color: var(--text-sub); font-size: 0.85rem; font-weight: 600;">
-                        {{ getStatusText(stats.process_status) }}
-                    </span>
+                    <span>{{ getStatusText(stats.process_status) }}</span>
                 </div>
             </div>
 
